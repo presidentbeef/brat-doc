@@ -1,0 +1,229 @@
+includes :scanner, :file
+
+doc_scanner = object.new
+
+doc_patterns = [
+  lua: [
+    anything: /(?:^(?!^\s*--\s+Object).*?$\n?)/
+
+    object: /^\s*--\s+Object:\s+(\w+)(?:\s+(instance))?\s*$\n?/
+
+    call: /^\s*--\s+Call:\s+([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+)(?:\.([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+))?(\s+\w+(?:\s*,\s*\w+)*)?\s*$\n/
+
+    binary: /^\s*--\s+Call:\s+([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+)\s+([!?\-*+^@~\/\\><$_%\=]+)\s+([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+)*$\n/
+
+    returns: /^\s*--\s+Returns:\s+(\w+)\s*$\n/
+
+    doc: /^\s*--\s+(?!Example:)(.*?)$\n/
+
+    empty: /^\s*--$\n/
+
+    example: /^\s*--\s+Example:(.*?)$\n/
+  ],
+
+  brat: [
+    anything: /(?:^(?!^\s*#\s+Object).*?$\n?)/
+
+    object: /^\s*#\s+Object:\s+(\w+)(?:\s+(instance))?\s*$\n?/
+
+    call: /^\s*#\s+Call:\s+([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+)(?:\.([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+))?(\s+\w+(?:\s*,\s*\w+)*)?\s*$\n/
+
+    binary: /^\s*#\s+Call:\s+([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+)\s+([!?\-*+^@~\/\\><$_%\=]+)\s+([a-zA-Z0-9_!?\-*+^&@~\/\\><$%]+)*$\n/
+
+    returns: /^\s*#\s+Returns:\s+(\w+)\s*$\n/
+
+    doc: /^\s*#\s+(?!Example:)(.*?)$\n/
+
+    empty: /^\s*#$\n/
+
+    example: /^\s*#\s+Example:(.*?)$\n/
+  ]
+]
+
+# Object: doc_scanner
+# Call: doc_scanner.new source, language
+# Returns: doc_scanner
+#
+# Create a new documentation scanner for the given source. Language should be
+# specified as either :lua or :brat.
+doc_scanner.init = { source, language |
+  my.patterns = doc_patterns[language]
+  my.scanner = scanner.new source
+}
+
+doc_scanner.prototype [
+
+  # Object: doc_scanner instance
+  # Call: scanner.next_doc
+  # Returns: hash
+  #
+  # Search for and parse the next documentation comment.
+  next_doc: {
+    scan_any
+
+    true? my.scanner.end?
+      { null }
+      {
+        obj = scan_object
+        calls = scan_calls
+        returns = scan_returns
+        doc = scan_docs
+        examples = scan_examples
+
+        [ object: obj,
+          calls: calls,
+          returns: returns,
+          doc: doc,
+          examples: examples
+        ]
+      }
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_any
+  #
+  # Skip source lines until Object line is found.
+  scan_any: {
+    while {
+      expect patterns[:anything]
+    }
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_object
+  # Returns: hash
+  #
+  # Scan Object line.
+  scan_object: {
+    obj = expect patterns[:object] 
+
+    [ object: obj[1],
+      instance: obj[2].true?
+    ]
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_calls
+  # Returns: array
+  #
+  # Scans any number of Call lines.
+  scan_calls: {
+    calls = []
+    
+    while {
+      call = scan_call
+      true? call
+        { calls << call }
+    }
+
+    calls
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_call
+  # Returns: hash
+  #
+  # Scans a Call line. Returns a hash or null if no Call is found.
+  scan_call: {
+    call = expect patterns[:call]
+
+    true? call
+      {
+        arguments = call[3]
+
+        true? arguments
+          { arguments = arguments.strip.split /\s*,\s*/ }
+
+        [ target: call[1],
+          method: call[2],
+          arguments: arguments,
+          operator: false
+        ]
+      }
+      {
+        call = expect patterns[:binary]
+
+        true? call
+        {
+          [ target: call[1],
+            method: call[2],
+            argument: call[3],
+            operator: true
+          ]
+        }
+      }
+  }
+
+  expect: { pattern |
+    my.scanner.scan pattern
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_returns
+  # Returns: string
+  #
+  # Scans a Returns line. Returns a string or null if no line was found.
+  scan_returns: {
+    returns = expect patterns[:returns] 
+
+    true? returns
+      { returns[1] }
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_docs
+  # Returns: array
+  #
+  # Scans any comment lines and returns them in an array.
+  scan_docs: {
+    docs = []
+
+    while {
+      expect patterns[:empty]
+      line = expect patterns[:doc]
+      true? line
+        { docs << line[1] }
+    }
+
+    docs
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_examples
+  # Returns: array
+  #
+  # Scans examples and returns them in an array.
+  scan_examples: {
+    examples = []
+
+    while {
+      example = scan_example
+      true? example
+        { examples << example }
+    }
+
+    examples
+  }
+
+  # Object: doc_scanner instance
+  # Call: scanner.scan_example
+  # Returns: array
+  #
+  # Scans a single example and returns an array of lines if it is found,
+  # otherwise it returns null.
+  scan_example: {
+    example = expect patterns[:example] 
+
+    true? example
+      { scan_docs }
+  }
+]
+
+#* Example
+s = doc_scanner.new(file.read("brat-doc.brat"), :brat)
+
+while {
+  doc = s.next_doc
+  p doc
+  doc
+}

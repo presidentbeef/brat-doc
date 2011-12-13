@@ -52,6 +52,22 @@ doc_scanner.init = { source, language |
 }
 
 doc_scanner.prototype [
+  # Object: doc_scanner instance
+  # Call: doc_scanner.scan_docs
+  # Returns: array
+  #
+  # Scan as many documents as possible and return
+  # the results in an array.
+  scan_docs: {
+    all_docs = []
+
+    while {
+      true? doc = next_doc,
+       { all_docs << doc }
+    }
+
+    all_docs
+  }
 
   # Object: doc_scanner instance
   # Call: scanner.next_doc
@@ -220,10 +236,5 @@ doc_scanner.prototype [
 ]
 
 #* Example
-s = doc_scanner.new(file.read("brat-doc.brat"), :brat)
+p doc_scanner.new(file.read("brat-doc.brat"), :brat).scan_docs
 
-while {
-  doc = s.next_doc
-  p doc
-  doc
-}

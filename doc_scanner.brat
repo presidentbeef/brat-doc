@@ -235,6 +235,8 @@ doc_scanner.prototype [
   }
 ]
 
+export doc_scanner, :doc_scanner
+
 #* Example
 p doc_scanner.new(file.read("brat-doc.brat"), :brat).scan_docs
 

@@ -1,0 +1,46 @@
+includes :file :doc_scanner :markdown_output
+
+brat_doc = object.new
+
+# Object: brat_doc
+# Call: brat_doc.scan file_name
+# Call: brat_doc.scan file_name, language
+# Returns: array
+#
+# Scans file for documentation and returns an array of the results.
+brat_doc.scan = { file_name, language = null |
+  null? language
+    { language = file_name.split(/\./).last }
+
+  p "Scanning #{file_name} with #{language}"
+  doc_scanner.new(file.read(file_name), language).scan_docs
+}
+
+# Object: brat_doc
+# Call: brat_doc.to_markdown docs
+# Returns: string
+#
+# Convert array of docs to markdown output.
+brat_doc.to_markdown = { docs |
+  p "Converting #{docs.length} docs to markdown"
+  md = markdown_output.new(docs)
+  p "Do it!"
+  md.output
+}
+
+# Object: brat_doc
+# Call: brat_doc.scan_to_markdown file_name
+# Call: brat_doc.scan_to_markdown file_name, language
+# Returns: string
+# 
+# Convenience method to scan and convert to markdown.
+brat_doc.scan_to_markdown = { file_name, language = null |
+  to_markdown scan file_name, language
+}
+
+true? program_args.length > 0
+  {
+    program_args.each { file |
+      p brat_doc.scan_to_markdown(file)
+    }
+  }

@@ -1,0 +1,89 @@
+markdown_output = object.new
+
+markdown_output.init = { docs |
+  my.docs = docs
+  my.instance_methods = []
+  my.object_methods = []
+}
+
+markdown_output.prototype [
+  output: {
+    out = my
+    docs.map({ doc |
+      out.output_method doc
+    }).join("\n\n")
+  }
+
+  output_method: { doc |
+    output_name(doc) << "\n" <<
+    output_returns(doc[:returns]) << "\n" <<
+    output_calls(doc[:calls]) << "\n" <<
+    output_docs(doc[:docs]) << "\n" <<
+    output_examples(doc[:examples])
+  }
+
+  output_name: { doc |
+    method_name = doc[:calls].first[:method]
+
+    "### #{method_name}"
+  }
+
+  output_returns: { returns |
+    "_#{returns}_"
+  }
+
+  output_calls: { calls, instance |
+    out = my
+    calls.map({ call |
+      out.output_call call, instance
+    }).join("  \n")
+  }
+
+  output_call: { call, instance |
+    target = null
+
+    true? instance
+      { 
+        target = "_#{call[:target]}_"
+        my.instance_methods << call[:method]
+      }
+      { 
+        target = call[:target] 
+        my.object_methods << call[:method]
+      }
+
+    true? call[:operator]
+    {
+      "#{target} #{call[:method]} #{output_arguments call[:arguments]}"
+    }
+    {
+      "#{target}.#{call[:method]} #{output_arguments call[:arguments]}"
+    }
+  }
+
+  output_arguments: { arguments |
+    true? arguments
+    { 
+      arguments.map({ argument |
+        "_#{argument}_"
+      }).join(", ")
+    }
+    { "" }
+  }
+
+  output_docs: { docs |
+    docs.map({ doc |
+      true? doc.strip == ""
+        { "\n\n" }
+        { doc }
+    }).join
+  }
+
+  output_examples: { examples |
+    examples.map({ example |
+      "    #{example}"
+    }).join "\n"
+  }
+]
+
+export markdown_output, :markdown_output

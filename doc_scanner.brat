@@ -1,4 +1,5 @@
-includes :scanner, :file
+include :file
+string_scanner = import :scanner :scanner
 
 doc_scanner = object.new
 
@@ -48,7 +49,9 @@ doc_patterns = [
 # specified as either :lua or :brat.
 doc_scanner.init = { source, language |
   my.patterns = doc_patterns[language]
-  my.scanner = scanner.new source
+  my.scanner = string_scanner.new source
+  true? source.null?
+    { throw "Source is null!" }
 }
 
 doc_scanner.prototype [
@@ -62,7 +65,7 @@ doc_scanner.prototype [
     all_docs = []
 
     while {
-      true? doc = next_doc,
+      true? (doc = next_doc)
        { all_docs << doc }
     }
 
@@ -83,7 +86,7 @@ doc_scanner.prototype [
         obj = scan_object
         calls = scan_calls
         returns = scan_returns
-        doc = scan_docs
+        doc = scan_doc
         examples = scan_examples
 
         [ object: obj,
@@ -187,11 +190,11 @@ doc_scanner.prototype [
   }
 
   # Object: doc_scanner instance
-  # Call: scanner.scan_docs
+  # Call: scanner.scan_doc
   # Returns: array
   #
   # Scans any comment lines and returns them in an array.
-  scan_docs: {
+  scan_doc: {
     docs = []
 
     while {
@@ -231,12 +234,12 @@ doc_scanner.prototype [
     example = expect patterns[:example] 
 
     true? example
-      { scan_docs }
+      { scan_doc }
   }
 ]
 
 export doc_scanner, :doc_scanner
 
 #* Example
-p doc_scanner.new(file.read("brat-doc.brat"), :brat).scan_docs
+p doc_scanner.new(file.read("brat_doc.brat"), :brat).scan_docs
 

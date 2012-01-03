@@ -9,23 +9,23 @@ markdown_output.init = { docs |
 markdown_output.prototype [
   output: {
     out = my
-    docs.map({ doc |
+    my.docs.map({ doc |
       out.output_method doc
     }).join("\n\n")
   }
 
   output_method: { doc |
     output_name(doc) << "\n" <<
-    output_returns(doc[:returns]) << "\n" <<
-    output_calls(doc[:calls]) << "\n" <<
-    output_docs(doc[:docs]) << "\n" <<
+    output_calls(doc[:calls], doc[:instance]) << "\n\n" <<
+    output_docs(doc[:doc]) << "\n" <<
     output_examples(doc[:examples])
   }
 
   output_name: { doc |
     method_name = doc[:calls].first[:method]
+    returns = doc[:returns] || { "object" }
 
-    "### #{method_name}"
+    "### (#{returns}) #{method_name}"
   }
 
   output_returns: { returns |

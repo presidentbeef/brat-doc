@@ -77,7 +77,7 @@ markdown_output.prototype [
       true? doc.strip == ""
         { "\n\n" }
         { doc }
-    }).join
+    }).join(" ")
   }
 
   output_examples: { examples |

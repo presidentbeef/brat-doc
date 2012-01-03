@@ -54,10 +54,10 @@ markdown_output.prototype [
 
     true? call[:operator]
     {
-      "#{target} #{call[:method]} #{output_arguments call[:arguments]}"
+      "> #{target} #{call[:method]} #{output_arguments call[:arguments]}"
     }
     {
-      "#{target}.#{call[:method]} #{output_arguments call[:arguments]}"
+      "> #{target}.#{call[:method]} #{output_arguments call[:arguments]}"
     }
   }
 

@@ -73,6 +73,7 @@ markdown_output.prototype [
 
   output_docs: { docs |
     docs.map({ doc |
+      doc.sub! /--\s*/, ""
       true? doc.strip == ""
         { "\n\n" }
         { doc }

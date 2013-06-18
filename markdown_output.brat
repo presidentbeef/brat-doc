@@ -8,9 +8,9 @@ markdown_output.init = { docs |
   my.object_methods = []
 }
 
-markdown_output.output_methods = { docs |
+markdown_output.output_methods = { docs, name |
   mo = my.new(docs)
-  mo.process("object")
+  mo.process(name)
   method_list = (mo.instance_methods + mo.object_methods).sort!
   method_list.each { name |
     p "- #{name}"

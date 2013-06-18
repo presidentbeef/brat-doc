@@ -21,9 +21,9 @@ brat_doc.scan = { file_name, language = null |
 # Returns: string
 #
 # Convert array of docs to markdown output.
-brat_doc.to_markdown = { docs |
+brat_doc.to_markdown = { docs, object_name |
   p "Converting #{docs.length} docs to markdown"
-  markdown_output.output_methods(docs)
+  markdown_output.output_methods(docs, object_name)
 }
 
 # Object: brat_doc
@@ -32,13 +32,13 @@ brat_doc.to_markdown = { docs |
 # Returns: string
 # 
 # Convenience method to scan and convert to markdown.
-brat_doc.scan_to_markdown = { file_name, language = null |
-  to_markdown scan file_name, language
+brat_doc.scan_to_markdown = { file_name, object_name |
+  to_markdown scan(file_name), object_name
 }
 
 true? program_args.length > 0
   {
     program_args.each { file |
-      p brat_doc.scan_to_markdown(file)
+      p brat_doc.scan_to_markdown(file, ask("Object name: "))
     }
   }

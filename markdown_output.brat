@@ -87,7 +87,7 @@ markdown_output.prototype [
 
     true? call[:operator]
     {
-      "> _#{target}_ #{meth} _#{call[:argument]}_"
+      "> #{target} #{meth} _#{call[:argument]}_"
     }
     {
       null? target

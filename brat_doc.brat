@@ -23,9 +23,7 @@ brat_doc.scan = { file_name, language = null |
 # Convert array of docs to markdown output.
 brat_doc.to_markdown = { docs |
   p "Converting #{docs.length} docs to markdown"
-  md = markdown_output.new(docs)
-  p "Do it!"
-  md.output
+  markdown_output.output_methods(docs)
 }
 
 # Object: brat_doc

@@ -1,3 +1,5 @@
+includes :subprocess
+
 markdown_output = object.new
 
 markdown_output.init = { docs |
@@ -6,23 +8,43 @@ markdown_output.init = { docs |
   my.object_methods = []
 }
 
+markdown_output.output_methods = { docs |
+  mo = my.new(docs)
+  mo.process("object")
+  method_list = (mo.instance_methods + mo.object_methods).sort!
+  method_list.each { name |
+    p "- #{name}"
+  }
+
+  p "---\n"
+
+  mo.output.join("\n\n")
+}
+
 markdown_output.prototype [
-  output: {
+  process: { name |
     out = my
-    my.docs.map({ doc |
-      out.output_method doc
-    }).join("\n\n")
+    my.output = my.docs.sort_by({ a, b |
+      lhs = a[:calls].first[:method] || { a[:calls].first[:target] }
+      rhs = b[:calls].first[:method] || { b[:calls].first[:target] }
+
+      lhs < rhs
+    }).map({ doc |
+      true? doc[:object][:object] == name
+       { out.output_method doc }
+       { null }
+    }).compact
   }
 
   output_method: { doc |
     output_name(doc) << "\n" <<
-    output_calls(doc[:calls], doc[:instance]) << "\n\n" <<
+    output_calls(doc[:calls], doc[:object][:instance]) << "\n\n" <<
     output_docs(doc[:doc]) << "\n" <<
     output_examples(doc[:examples])
   }
 
   output_name: { doc |
-    method_name = doc[:calls].first[:method]
+    method_name = doc[:calls].first[:method] || { doc[:calls].first[:target] }
     returns = doc[:returns] || { "object" }
 
     "### (#{returns}) #{method_name}"
@@ -41,23 +63,36 @@ markdown_output.prototype [
 
   output_call: { call, instance |
     target = null
+    meth = null
+
+    false? call[:method]
+      { meth = call[:target] }
+      { meth = call[:method] }
 
     true? instance
-      { 
-        target = "_#{call[:target]}_"
-        my.instance_methods << call[:method]
+      {
+        false? my.instance_methods.include?(meth)
+          { my.instance_methods << meth }
+
+        false? meth == call[:target]
+          { target = "_#{call[:target]}_" }
       }
-      { 
-        target = call[:target] 
-        my.object_methods << call[:method]
+      {
+        false? my.object_methods.include?(meth)
+          { my.object_methods << meth }
+
+        false? meth == call[:target]
+          { target = call[:target] }
       }
 
     true? call[:operator]
     {
-      "> #{target} #{call[:method]} #{output_arguments call[:arguments]}"
+      "> _#{target}_ #{meth} _#{call[:argument]}_"
     }
     {
-      "> #{target}.#{call[:method]} #{output_arguments call[:arguments]}"
+      null? target
+        { "> #{meth} #{output_arguments call[:arguments]}" }
+        { "> #{target}.#{meth} #{output_arguments call[:arguments]}" }
     }
   }
 
@@ -81,8 +116,11 @@ markdown_output.prototype [
   }
 
   output_examples: { examples |
+    mo = my
     examples.map({ example |
-      "    #{example}"
+      true? example.array?
+        { mo.output_examples example }
+        { "    #{example}" }
     }).join "\n"
   }
 ]

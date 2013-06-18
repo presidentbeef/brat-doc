@@ -47,7 +47,7 @@ markdown_output.prototype [
     method_name = doc[:calls].first[:method] || { doc[:calls].first[:target] }
     returns = doc[:returns] || { "object" }
 
-    "### (#{returns}) #{method_name}"
+    "<a id=\"#{method_name}\"></a>\n### (#{returns}) #{method_name}"
   }
 
   output_returns: { returns |

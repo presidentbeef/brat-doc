@@ -17,6 +17,8 @@ doc_patterns = [
 
     doc: /^\s*--\s+(?!Example:)(.*?)$\n/
 
+    code: /^\s*--(?!Example:)(.*?)$\n/
+
     empty: /^\s*--$\n/
 
     example: /^\s*--\s+Example:(.*?)$\n/
@@ -34,6 +36,8 @@ doc_patterns = [
     returns: /^\s*#\s+Returns:\s+(\w+)\s*$\n/
 
     doc: /^\s*#\s+(?!Example:)(.*?)$\n/
+
+    code: /^\s*#(?!Example:)(.*?)$\n/
 
     empty: /^\s*#$\n/
 
@@ -114,7 +118,7 @@ doc_scanner.prototype [
   #
   # Scan Object line.
   scan_object: {
-    obj = expect patterns[:object] 
+    obj = expect patterns[:object]
 
     [ object: obj[1],
       instance: obj[2].true?
@@ -128,7 +132,7 @@ doc_scanner.prototype [
   # Scans any number of Call lines.
   scan_calls: {
     calls = []
-    
+
     while {
       call = scan_call
       true? call
@@ -183,7 +187,7 @@ doc_scanner.prototype [
   #
   # Scans a Returns line. Returns a string or null if no line was found.
   scan_returns: {
-    returns = expect patterns[:returns] 
+    returns = expect patterns[:returns]
 
     true? returns
       { returns[1] }
@@ -231,11 +235,24 @@ doc_scanner.prototype [
   # Scans a single example and returns an array of lines if it is found,
   # otherwise it returns null.
   scan_example: {
-    example = expect patterns[:example] 
+    example = expect patterns[:example]
 
     true? example
-      { scan_doc }
+      { scan_code }
   }
+
+  scan_code: {
+    docs = []
+
+    while {
+      line = expect patterns[:code]
+      true? line
+        { docs << line[1] }
+    }
+
+    docs
+  }
+
 ]
 
 export doc_scanner, :doc_scanner

@@ -100,7 +100,7 @@ markdown_output.prototype [
     true? arguments
     { 
       arguments.map({ argument |
-        "_#{argument}_"
+        "_#{argument.sub(/_/, "\\_")}_"
       }).join(", ")
     }
     { "" }
@@ -123,6 +123,14 @@ markdown_output.prototype [
         { "    #{example}" }
     }).join "\n"
   }
+
+#*
+  syntax_highlight: { code |
+    code.sub!(/"/, '\\"')
+
+    highlighted = subprocess.run 
+  }
+*#
 ]
 
 export markdown_output, :markdown_output
